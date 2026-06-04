@@ -21,7 +21,9 @@ stringData:
     ssh-ed25519 AAAA... you@host
 ```
 
-**Anthropic API key:**
+**Claude authentication** — choose one of the two options below.
+
+#### Option A: API key (pay-per-use)
 
 ```yaml
 apiVersion: v1
@@ -32,6 +34,17 @@ type: Opaque
 stringData:
   api_key: sk-ant-...
 ```
+
+#### Option B: OAuth credentials (Pro/Max subscription)
+
+Claude Code stores OAuth credentials in `~/.claude/.credentials.json` after you log in locally. Copy that file into a secret:
+
+```sh
+kubectl create secret generic claude-credentials \
+  --from-file=.credentials.json=$HOME/.claude/.credentials.json
+```
+
+Then mount it into the pod instead of setting `ANTHROPIC_API_KEY` (see the Pod spec below).
 
 ### RBAC
 
@@ -61,6 +74,8 @@ Grant broader permissions (e.g. `edit` or a custom role) if you need Claude to c
 
 ### Pod
 
+#### Option A: API key
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -84,6 +99,37 @@ spec:
             secretKeyRef:
               name: anthropic
               key: api_key
+```
+
+#### Option B: OAuth credentials
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: k8s-agent
+spec:
+  serviceAccountName: k8s-agent
+  containers:
+    - name: agent
+      image: <your-dockerhub-username>/k8s-agent:<tag>
+      ports:
+        - containerPort: 22
+      env:
+        - name: SSH_AUTHORIZED_KEYS
+          valueFrom:
+            secretKeyRef:
+              name: k8s-agent-ssh
+              key: authorized_keys
+      volumeMounts:
+        - name: claude-credentials
+          mountPath: /home/agent/.claude/.credentials.json
+          subPath: .credentials.json
+          readOnly: true
+  volumes:
+    - name: claude-credentials
+      secret:
+        secretName: claude-credentials
 ```
 
 ### Connecting
