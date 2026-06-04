@@ -2,7 +2,6 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "*" ]
     tags:
       - "*:v*.*.*"
 
@@ -20,6 +19,24 @@ jobs:
         TAG_NAME="${{ github.ref_name }}"
         echo "repo=${TAG_NAME%%:*}" >> $GITHUB_OUTPUT
         echo "tag=${TAG_NAME##*:}" >> $GITHUB_OUTPUT
+    - name: Validate repo name matches branch name
+      run: |
+        BRANCH="${{ github.event.base_ref }}"
+        BRANCH="${BRANCH##refs/heads/}"
+        REPO="${{ steps.extract.outputs.repo }}"
+        if [ "$REPO" != "$BRANCH" ]; then
+          echo "Error: tag repo '$REPO' does not match branch '$BRANCH'"
+          exit 1
+        fi
+    - name: Validate repo name matches branch name
+      run: |
+        BRANCH="${{ github.event.base_ref }}"
+        BRANCH="${BRANCH##refs/heads/}"
+        REPO="${{ steps.extract.outputs.repo }}"
+        if [ "$REPO" != "$BRANCH" ]; then
+          echo "Error: tag repo '$REPO' does not match branch '$BRANCH'"
+          exit 1
+        fi
     - name: Build, Tag & Publish Image to DockerHub
       uses: dinushchathurya/build-tag-push-action@v1.2.1
       with:
