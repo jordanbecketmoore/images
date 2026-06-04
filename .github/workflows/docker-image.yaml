@@ -1,0 +1,32 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "*" ]
+    tags:
+      - "*:v*.*.*"
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Extract repository and tag from git tag
+      id: extract
+      run: |
+        TAG_NAME="${{ github.ref_name }}"
+        echo "repo=${TAG_NAME%%:*}" >> $GITHUB_OUTPUT
+        echo "tag=${TAG_NAME##*:}" >> $GITHUB_OUTPUT
+    - name: Build, Tag & Publish Image to DockerHub
+      uses: dinushchathurya/build-tag-push-action@v1.2.1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        context: .
+        file: ./Dockerfile
+        repoOwner: ${{ secrets.DOCKER_USERNAME }}
+        repository: ${{ steps.extract.outputs.repo }}
+        tag: ${{ steps.extract.outputs.tag }}
