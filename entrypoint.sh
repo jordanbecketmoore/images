@@ -11,6 +11,13 @@ if [ -n "$SSH_AUTHORIZED_KEYS" ]; then
     chown agent:agent /home/agent/.ssh/authorized_keys
 fi
 
+# Copy Claude credentials from staging mount so agent owns the file
+if [ -f /run/secrets/claude-credentials ]; then
+    cp /run/secrets/claude-credentials /home/agent/.claude/.credentials.json
+    chown agent:agent /home/agent/.claude/.credentials.json
+    chmod 600 /home/agent/.claude/.credentials.json
+fi
+
 # Make ANTHROPIC_API_KEY available to SSH sessions via the agent's login profile
 mkdir -p /home/agent/.profile.d
 if [ -n "$ANTHROPIC_API_KEY" ]; then

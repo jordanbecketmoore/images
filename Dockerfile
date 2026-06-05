@@ -29,8 +29,10 @@ RUN curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm
 RUN npm install -g @anthropic-ai/claude-code
 
 RUN useradd -m -s /bin/bash -u 1001 agent \
-    && mkdir -p /home/agent/.ssh \
-    && chmod 700 /home/agent/.ssh
+    && passwd -d agent \
+    && mkdir -p /home/agent/.ssh /home/agent/.claude \
+    && chown -R agent:agent /home/agent/.ssh /home/agent/.claude \
+    && chmod 700 /home/agent/.ssh /home/agent/.claude
 
 COPY sshd_config /etc/ssh/sshd_config
 COPY entrypoint.sh /entrypoint.sh
